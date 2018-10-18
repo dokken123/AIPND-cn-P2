@@ -37,7 +37,7 @@
 # 
 # 提示：记得使用 notebook 中的魔法指令 `%matplotlib inline`，否则会导致你接下来无法打印出图像。
 
-# In[171]:
+# In[1]:
 
 
 import numpy as np
@@ -64,37 +64,37 @@ movie_data = pd.read_csv("./tmdb-movies.csv")
 # 
 # 
 
-# In[172]:
+# In[2]:
 
 
 movie_data.head()
 
 
-# In[173]:
+# In[3]:
 
 
 movie_data.tail()
 
 
-# In[174]:
+# In[4]:
 
 
 movie_data.sample()
 
 
-# In[175]:
+# In[5]:
 
 
 movie_data.dtypes
 
 
-# In[176]:
+# In[6]:
 
 
 movie_data.isnull().any()
 
 
-# In[177]:
+# In[7]:
 
 
 movie_data.describe()
@@ -108,10 +108,37 @@ movie_data.describe()
 # 
 # 任务：使用适当的方法来清理空值，并将得到的数据保存。
 
-# In[178]:
+# In[8]:
 
 
-movie_data.dropna(how='any', inplace=True)
+movie_data.info()
+
+
+# In[9]:
+
+
+movie_data.drop('homepage',axis=1, inplace=True)
+movie_data.drop('tagline',axis=1, inplace=True)
+
+
+# In[10]:
+
+
+movie_data['keywords'].fillna('UNKNOWN', inplace=True)
+movie_data['production_companies'].fillna('UNKNOWN', inplace=True)
+movie_data['cast'].fillna('UNKNOWN', inplace=True)
+
+
+# In[11]:
+
+
+movie_data.dropna(how='any',inplace=True)
+
+
+# In[12]:
+
+
+movie_data.info()
 
 
 # ---
@@ -135,19 +162,19 @@ movie_data.dropna(how='any', inplace=True)
 # 
 # 要求：每一个语句只能用一行代码实现。
 
-# In[179]:
+# In[13]:
 
 
 movie_data[['id','popularity','budget','runtime','vote_average']]
 
 
-# In[180]:
+# In[14]:
 
 
 movie_data[1:21].append(movie_data[48:50])
 
 
-# In[181]:
+# In[15]:
 
 
 movie_data['popularity'][50:61]
@@ -164,13 +191,13 @@ movie_data['popularity'][50:61]
 # 
 # 要求：请使用 Logical Indexing实现。
 
-# In[182]:
+# In[16]:
 
 
 movie_data[(movie_data['popularity'] > 5)]
 
 
-# In[183]:
+# In[17]:
 
 
 movie_data[(movie_data['popularity'] > 5) &  (movie_data['release_year'] > 1996)]
@@ -185,13 +212,13 @@ movie_data[(movie_data['popularity'] > 5) &  (movie_data['release_year'] > 1996)
 # 
 # 要求：使用 `Groupby` 命令实现。
 
-# In[184]:
+# In[18]:
 
 
 movie_data.groupby('release_year').agg({"revenue":'mean'})
 
 
-# In[185]:
+# In[19]:
 
 
 movie_data.groupby('director').agg({"popularity":'mean'}).sort_values(by='popularity', ascending=False)
@@ -216,65 +243,135 @@ movie_data.groupby('director').agg({"popularity":'mean'}).sort_values(by='popula
 
 # **任务3.1：**对 `popularity` 最高的20名电影绘制其 `popularity` 值。
 
-# In[226]:
+# In[20]:
 
 
-top_popularity = movie_data.sort_values(by='popularity',ascending=False)[:20].reset_index()[['popularity']]
+top_popularity = movie_data.sort_values(by='popularity',ascending=False)[:20].reset_index()[['popularity','original_title']]
 top_popularity
-plt.errorbar(data=top_popularity, x=top_popularity.index,y=top_popularity['popularity'])
-plt.scatter(data=top_popularity, x=top_popularity.index,y=top_popularity['popularity'])
+plt.xlabel('original_title')
+plt.ylabel('popularity')
+plt.xticks(rotation=90)
+plt.errorbar(data=top_popularity, x=top_popularity['original_title'],y=top_popularity['popularity'])
+plt.scatter(data=top_popularity, x=top_popularity['original_title'],y=top_popularity['popularity'])
 
 
 # ---
 # **任务3.2：**分析电影净利润（票房-成本）随着年份变化的情况，并简单进行分析。
 
-# In[234]:
+# In[21]:
 
 
-avg_revenue_by_year = movie_data.groupby('release_year').agg({'revenue':'mean','budget':'mean'}).sort_values(by='release_year')
-plt.errorbar(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_revenue_by_year['budget'])
-plt.errorbar(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_revenue_by_year['revenue'])
-plt.scatter(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_revenue_by_year['budget'])
-plt.scatter(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_revenue_by_year['revenue'])
-"""
-analysis:
-movie budget looks stable and does not has big chages before 2000, afterwards it raises for a little bit, and it does not have certain relationships
-to revenue from the statistics
-movie revenue goes up and down around every 15 years according to the history and looks like it will follow the economy situation, 
-when economy is going low, it will fall down to even zero
+movie_data['profit'] = movie_data['revenue'] - movie_data['budget']
+avg_revenue_by_year = movie_data.groupby('release_year')['revenue'].mean()
+avg_budget_by_year = movie_data.groupby('release_year')['budget'].mean()
+avg_profit_by_year = movie_data.groupby('release_year')['profit'].mean()
+plt.xlabel('release_year')
+plt.ylabel('average')
+plt.errorbar(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_revenue_by_year, label='revenue by year')
+plt.errorbar(data=avg_revenue_by_year, x=avg_budget_by_year.index,y=avg_budget_by_year, label='budget by year')
+plt.errorbar(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_profit_by_year, label='profit by year')
+plt.scatter(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_revenue_by_year, label='revenue by year')
+plt.scatter(data=avg_revenue_by_year, x=avg_budget_by_year.index,y=avg_budget_by_year, label='budget by year')
+plt.scatter(data=avg_revenue_by_year, x=avg_profit_by_year.index,y=avg_profit_by_year, label='profit by year')
+plt.legend(['revenue by year','budget by year','profit by year'])
+# avg_revenue_by_year = movie_data.groupby('release_year').agg({'revenue':'mean','budget':'mean','profit':'mean'}).sort_values(by='release_year')
+# plt.errorbar(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_revenue_by_year['budget'])
+# plt.errorbar(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_revenue_by_year['revenue'])
+# plt.errorbar(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_revenue_by_year['profit'])
+# plt.scatter(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_revenue_by_year['budget'])
+# plt.scatter(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_revenue_by_year['revenue'])
+# plt.errorbar(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_revenue_by_year['profit'])
+# """
+# analysis:
+# movie budget looks stable and does not has big chages before 2000, afterwards it raises for a little bit, and it does not have certain relationships
+# to revenue from the statistics
+# movie revenue goes up and down around every 15 years according to the history and looks like it will follow the economy situation, 
+# when economy is going low, it will fall down to even zero
 
-"""
+# """
 
 
 # ---
 # 
 # **[选做]任务3.3：**选择最多产的10位导演（电影数量最多的），绘制他们排行前3的三部电影的票房情况，并简要进行分析。
 
-# In[294]:
+# In[41]:
 
 
-most_produced_directors = movie_data.groupby('director').agg({'id':'count'}).rename(columns={"id":"count"}).sort_values(by='count',ascending=False)[:10].index
-top_directors = most_produced_directors.get_values()
-top_director_movies = movie_data[movie_data['director'].isin(top_directors)]
-top_director_movies.sort_values(by=['director','revenue'], ascending=False)
-# plt.errorbar(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_revenue_by_year['revenue'])
-# plt.scatter(data=avg_revenue_by_year, x=avg_revenue_by_year.index,y=avg_revenue_by_year['revenue'])
+## 拆分导演, 原来数据中单部电影多名导演是用’|’隔开的
+tmp = movie_data['director'].str.split('|', expand=True).stack().reset_index(level=1, drop=True).rename('director') 
+movie_data_split = movie_data[['original_title', 'revenue_adj']].join(tmp)
+
+# 整理target_data , 每个导演3部电影, 数据会有30行
+top_directors = list(movie_data['director'].value_counts().sort_values(ascending=False)[:10].index)
+top_director_movies = movie_data_split[movie_data_split['director'].isin(top_directors)].sort_values(by=['director', 'revenue_adj'], ascending=[True,False])
+top_3_director_movies = top_director_movies.groupby('director').head(3)
+
+
+# ## 作图, 将导演设为颜色维度hue, 达到分别作图的效果
+fig = plt.figure(figsize=(15, 6)) 
+ax = sb.barplot(data=top_3_director_movies, x='original_title', y='revenue_adj', hue='director', dodge=False, palette="Set2")
+plt.xticks(rotation = 90)
+plt.ylabel('Revenue')
+plt.xlabel('Original Title')
 
 
 # ---
 # 
 # **[选做]任务3.4：**分析1968年~2015年六月电影的数量的变化。
 
-# In[288]:
+# In[120]:
 
 
-sel_data = movie_data[(movie_data['release_year'] >= 1968) & (movie_data['release_year'] <= 2015)]
-bin_edge = np.arange(1968,2016,1)
-plt.hist(data=sel_data, x='release_year',bins=bin_edge, rwidth=0.5)
+# sel_data = movie_data[(movie_data['release_year'] >= 1968) & (movie_data['release_year'] <= 2015)]
+# bin_edge = np.arange(1968,2016,1)
+# plt.hist(data=sel_data, x='release_year',bins=bin_edge, rwidth=0.5)
+
+# 筛选条件1 年份
+sel_year = movie_data['release_year'].between(1968,2015)
+# 筛选条件2 六月
+
+movie_data['month'] = pd.to_datetime(movie_data['release_date'])
+sel_June = movie_data['month'].apply(lambda x: x.month == 6)
+
+# 筛选数据并作图(参考逻辑读取部分)
+# movie_data[sel_year&sel_June]['release_year'].value_counts().sort_index().plot(kind='bar', figsize=(20, 10))
+movie_year_count = movie_data[sel_year&sel_June]['release_year'].value_counts().sort_index()
+movie_year_count = pd.DataFrame(movie_year_count).rename(columns={"release_year":"count"})
+# TODO: 补充可视化的其他要素
+fig = plt.figure(figsize=(15, 6)) 
+ax = sb.barplot(data=movie_year_count, x=movie_year_count.index, y=movie_year_count['count'], dodge=False, palette="Set2")
+plt.xticks(rotation = 90)
+plt.ylabel('Movie Count')
+plt.xlabel('Year')
 
 
 # ---
 # 
 # **[选做]任务3.5：**分析1968年~2015年六月电影 `Comedy` 和 `Drama` 两类电影的数量的变化。
+
+# In[160]:
+
+
+sel_year = movie_data['release_year'].between(1968,2015)
+
+movie_data['month'] = pd.to_datetime(movie_data['release_date'])
+sel_June = movie_data['month'].apply(lambda x: x.month == 6)
+
+
+tmp = movie_data['genres'].str.split('|', expand=True).stack().reset_index(level=1, drop=True).rename('genres') 
+movie_data_split = movie_data[['release_year', 'month']].join(tmp)
+
+sel_comedy = movie_data_split['genres'].str.contains('Comedy')
+sel_drama = movie_data_split['genres'].str.contains('Drama')
+movie_data_split = movie_data_split[sel_year&sel_June&(sel_comedy|sel_drama)].groupby(['release_year','genres']).count().sort_index().rename(columns={'month':'count'}).reset_index()
+
+fig = plt.figure(figsize=(15, 6)) 
+
+ax = sb.barplot(data=movie_data_split, x=movie_data_split['release_year'], y=movie_data_split['count'], hue='genres', dodge=True, palette="Set2")
+plt.xticks(rotation = 90)
+plt.ylabel('Movie Count')
+plt.xlabel('Year')
+
 
 # > 注意: 当你写完了所有的代码，并且回答了所有的问题。你就可以把你的 iPython Notebook 导出成 HTML 文件。你可以在菜单栏，这样导出**File -> Download as -> HTML (.html)、Python (.py)** 把导出的 HTML、python文件 和这个 iPython notebook 一起提交给审阅者。
